@@ -1,9 +1,0 @@
-Answer the question using the dataset sample and the dataset profile below:
-
-{dataset_sample_and_profile}
-
-Furthermore, the semantic information for the dataset columns are:
-{semantic_summary}
-
-Question: Describe the dataset in sentences.
-Answer:

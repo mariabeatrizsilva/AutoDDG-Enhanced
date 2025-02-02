@@ -1,7 +1,12 @@
-EVALUATE_SYSETM = """
+import openai
+# from openai import OpenAI
+
+class Prompt:
+    def __init__(self):
+        self.EVALUATE_SYSETM = """
             You are a helpful and precise assistant for checking the quality of the dataset description.
             """
-EVALUATE_PROMPT = """
+        self.EVALUATE_PROMPT = """
             You will be given one tabular dataset description. Your task is to rate the description on 3 metrics.
             Please make sure you read and understand these instructions carefully. Please keep this document open while reviewing, and refer to it as needed.
             
@@ -31,3 +36,54 @@ EVALUATE_PROMPT = """
             Please provide scores for the given dataset description based on the Evaluation Criteria. Do not include any additional information or comments in your response.
             Evaluation Form (scores ONLY):
             """
+
+
+class GPTEvaluator:
+    def __init__(self):
+        # openai.api_key = GPT4_API_KEY
+        self.client = openai.OpenAI(
+            api_key = GPT4_API_KEY,
+        )
+        self.model = "gpt-4o"
+        self.prompt = Prompt()
+        
+    def evaluate(self, description):
+        content = self.prompt.EVALUATE_PROMPT + "Description: " + description + "\n" + "Evaluation Form (scores ONLY): "
+        return self.generate(content)                            
+        
+    def generate(self, content):
+        evaluation = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                    {
+                        "role": "system", 
+                        "content": self.prompt.EVALUATE_SYSETM},
+                    {
+                        "role": "user", 
+                        "content":  content},
+                ],
+            temperature=0.3)
+        score = evaluation.choices[0].message.content
+        return score
+    
+    
+class LLaMAEvaluator:
+    def __init__(self):
+        self.client = openai.OpenAI(
+            api_key = LLAMA_API_KEY,
+            base_url = "https://api.deepinfra.com/v1/openai",
+        )
+        self.model = "meta-llama/Meta-Llama-3.1-70B-Instruct"
+        self.prompt = Prompt()
+        
+    def evaluate(self, description):
+        content = self.prompt.EVALUATE_PROMPT + "Description: " + description + "\n" + "Evaluation Form (scores ONLY): "
+        return self.generate(content)                            
+        
+    def generate(self, content):
+        chat_completion = self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": content}],
+        )
+        score = chat_completion.choices[0].message.content
+        return score
