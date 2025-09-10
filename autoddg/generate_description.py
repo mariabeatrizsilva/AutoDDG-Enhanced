@@ -1,4 +1,3 @@
-import pandas as pd
 import json
 import re
 
@@ -17,12 +16,20 @@ class DatasetDescriptionGenerator:
         self.model = model_name
         self.temperature = temperature
         self.description_words = description_words
-        print(f"Dataset Description Generator initialized with model: {model_name}, temperature: {temperature}, description words: {description_words}")
-    
-    def _generate_prompt(self, dataset_sample, 
-                         dataset_profile=None, use_profile=False,
-                         semantic_profile=None, use_semantic_profile=False,
-                         data_topic=None, use_topic=False):
+        print(
+            f"Dataset Description Generator initialized with model: {model_name}, temperature: {temperature}, description words: {description_words}"
+        )
+
+    def _generate_prompt(
+        self,
+        dataset_sample,
+        dataset_profile=None,
+        use_profile=False,
+        semantic_profile=None,
+        use_semantic_profile=False,
+        data_topic=None,
+        use_topic=False,
+    ):
         """
         Generates the prompt for the OpenAI model based on the provided inputs.
 
@@ -67,13 +74,18 @@ class DatasetDescriptionGenerator:
             f"\nAnswer:"
         )
 
-        
         return prompt
-    
-    def generate_description(self, dataset_sample, 
-                             dataset_profile=None, use_profile=False,
-                             semantic_profile=None, use_semantic_profile=False,
-                             data_topic=None, use_topic=False):
+
+    def generate_description(
+        self,
+        dataset_sample,
+        dataset_profile=None,
+        use_profile=False,
+        semantic_profile=None,
+        use_semantic_profile=False,
+        data_topic=None,
+        use_topic=False,
+    ):
         """
         Generates a dataset description using the provided dataset sample, profile, and semantic types.
 
@@ -86,24 +98,33 @@ class DatasetDescriptionGenerator:
         :return: Generated description as a string.
         """
         # Create the prompt using the provided parameters
-        prompt = self._generate_prompt(dataset_sample, dataset_profile, use_profile,
-                                       semantic_profile, use_semantic_profile,
-                                       data_topic, use_topic)
-        
+        prompt = self._generate_prompt(
+            dataset_sample,
+            dataset_profile,
+            use_profile,
+            semantic_profile,
+            use_semantic_profile,
+            data_topic,
+            use_topic,
+        )
+
         # Make a request to the OpenAI API to generate the description
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
-                {"role": "system", "content": "You are an assistant for a dataset search engine. Your goal is to improve the readability of dataset description for dataset search engine users."},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system",
+                    "content": "You are an assistant for a dataset search engine. Your goal is to improve the readability of dataset description for dataset search engine users.",
+                },
+                {"role": "user", "content": prompt},
             ],
-            temperature=self.temperature
+            temperature=self.temperature,
         )
-        
+
         # Extract the response content
         description = response.choices[0].message.content
         return prompt, description
-    
+
 
 class SearchFocusedDescription:
     def __init__(self, client, model_name="gpt-4o-mini"):
@@ -177,11 +198,14 @@ class SearchFocusedDescription:
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
-                {"role": "system", "content": "You are an assistant for a dataset search engine. Your goal is to improve the performance of the dataset search engine for keyword queries."},
-                {"role": "user", "content": prompt}
-            ]
+                {
+                    "role": "system",
+                    "content": "You are an assistant for a dataset search engine. Your goal is to improve the performance of the dataset search engine for keyword queries.",
+                },
+                {"role": "user", "content": prompt},
+            ],
         )
-        
+
         expanded_description = response.choices[0].message.content
         return prompt, expanded_description
 
@@ -218,23 +242,23 @@ class SemanticProfiler:
         print(f"Semantic Type Analyzer initialized with model: {model_name}")
 
     def _fix_json_response(self, response_text):
-            """
-            Automatically close all open braces by counting mismatched '{' and '}' in the response text.
+        """
+        Automatically close all open braces by counting mismatched '{' and '}' in the response text.
 
-            :param response_text: The response text to fix.
-            :return: The fixed response text.
-            """
-            response_text = re.search(r'\{.*\}', response_text, re.DOTALL).group()
-            
-            # Append the required number of closing braces
-            open_braces = response_text.count('{')
-            close_braces = response_text.count('}')
-            response_text += '}' * (open_braces - close_braces)
+        :param response_text: The response text to fix.
+        :return: The fixed response text.
+        """
+        response_text = re.search(r"\{.*\}", response_text, re.DOTALL).group()
 
-            # Use regex to remove any trailing comma before the final closing brace
-            response_text = re.sub(r',\s*}', '}', response_text)
-            return response_text
-    
+        # Append the required number of closing braces
+        open_braces = response_text.count("{")
+        close_braces = response_text.count("}")
+        response_text += "}" * (open_braces - close_braces)
+
+        # Use regex to remove any trailing comma before the final closing brace
+        response_text = re.sub(r",\s*}", "}", response_text)
+        return response_text
+
     def get_semantic_type(self, column_name, sample_values):
         prompt = f"""
         You are a dataset semantic analyzer. Based on the column name and sample values, classify the column into multiple semantic types. 
@@ -253,15 +277,18 @@ class SemanticProfiler:
         Column name: {column_name}
         Sample values: {sample_values}
         """
-        
+
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
-                {"role": "system", "content": "You are a helpful assistant skilled in dataset semantic analysis."},
-                {"role": "user", "content": prompt}
-            ]
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant skilled in dataset semantic analysis.",
+                },
+                {"role": "user", "content": prompt},
+            ],
         )
-        
+
         response_text = response.choices[0].message.content
 
         response_text = self._fix_json_response(response_text)
@@ -281,6 +308,7 @@ class SemanticProfiler:
         :param dataframe: pandas DataFrame to be analyzed.
         :return: Dictionary of semantic types for each column.
         """
+
         def _get_sample(data_pd, sample_size):
             if sample_size < len(data_pd):
                 data_sample = data_pd.sample(sample_size, random_state=9)
@@ -312,25 +340,34 @@ class SemanticProfiler:
 
                 # Create a human-readable summary for the column
                 column_summary = f"**{column}**: "
-                entity_type = semantic_description.get('Entity Type', 'Unknown')
-                if entity_type != '' and entity_type != 'Unknown':
+                entity_type = semantic_description.get("Entity Type", "Unknown")
+                if entity_type != "" and entity_type != "Unknown":
                     column_summary += f"Represents {entity_type.lower()}. "
 
                 # Handle spatial and temporal cases
-                isTemporal = semantic_description['Temporal'].get('isTemporal', False)            
-                if isTemporal and semantic_description['Temporal']['isTemporal'] == True:
+                isTemporal = semantic_description["Temporal"].get("isTemporal", False)
+                if (
+                    isTemporal
+                    and semantic_description["Temporal"]["isTemporal"] == True
+                ):
                     column_summary += f"Contains temporal data (resolution: {semantic_description['Temporal']['resolution']}). "
-                isSpatial = semantic_description['Spatial'].get('isSpatial', False)
-                if isSpatial and semantic_description['Spatial']['isSpatial'] == True:
+                isSpatial = semantic_description["Spatial"].get("isSpatial", False)
+                if isSpatial and semantic_description["Spatial"]["isSpatial"] == True:
                     column_summary += f"Contains spatial data (resolution: {semantic_description['Spatial']['resolution']}). "
-                
-                domain_type = semantic_description.get('Domain-Specific Types', 'Unknown')
-                if domain_type != '' and domain_type != 'Unknown':
+
+                domain_type = semantic_description.get(
+                    "Domain-Specific Types", "Unknown"
+                )
+                if domain_type != "" and domain_type != "Unknown":
                     column_summary += f"Domain-specific type: {domain_type.lower()}. "
 
-                function_context = semantic_description.get('Function/Usage Context', 'Unknown')
-                if function_context != '' and function_context != 'Unknown':
-                    column_summary += f"Function/Usage context: {function_context.lower()}. "
+                function_context = semantic_description.get(
+                    "Function/Usage Context", "Unknown"
+                )
+                if function_context != "" and function_context != "Unknown":
+                    column_summary += (
+                        f"Function/Usage context: {function_context.lower()}. "
+                    )
 
                 # Add sample values
                 # if sample_values:
@@ -343,5 +380,8 @@ class SemanticProfiler:
                 continue
 
         # Join the semantic summary into a readable format
-        final_summary = "The key semantic information for this dataset includes:\n" + '\n'.join(semantic_summary)
+        final_summary = (
+            "The key semantic information for this dataset includes:\n"
+            + "\n".join(semantic_summary)
+        )
         return final_summary
