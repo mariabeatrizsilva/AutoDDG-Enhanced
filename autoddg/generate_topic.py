@@ -11,7 +11,7 @@ class DatasetTopicGenerator:
         self.model = model_name
         self.temperature = temperature
         print(f"Dataset Topic Generator initialized with model: {model_name}")
-    
+
     def _generate_prompt(self, title, original_description, dataset_sample):
         """
         Generates the prompt for the model to generate a concise topic.
@@ -24,24 +24,23 @@ class DatasetTopicGenerator:
 
         prompt = f"Using the dataset information provided, generate a concise topic in 2-3 words that best describes the dataset's primary theme:\n\n"
         if original_description:
-            prompt += (f"Title: {title}\n"
-                       f"Original Description: {original_description}\n")
+            prompt += (
+                f"Title: {title}\n" f"Original Description: {original_description}\n"
+            )
         else:
             prompt += f"Title: {title}\n"
 
-        prompt += (f"Dataset Sample: {dataset_sample}\n\n"
-                   f"Topic (2-3 words):")
+        prompt += f"Dataset Sample: {dataset_sample}\n\n" f"Topic (2-3 words):"
 
-        
         # prompt = (f"Using the dataset information provided, generate a concise topic in 2-3 words that best "
         #           f"describes the dataset's primary theme:\n\n"
         #           f"Title: {title}\n"
         #           f"Original Description: {original_description}\n"
         #           f"Dataset Sample: {dataset_sample}\n\n"
         #           f"Topic (2-3 words):")
-        
+
         return prompt
-    
+
     def generate_topic(self, title, original_description, dataset_sample):
         """
         Generates a concise dataset topic using the provided title, original description, and data sample.
@@ -53,16 +52,19 @@ class DatasetTopicGenerator:
         """
         # Create the prompt using the provided parameters
         prompt = self._generate_prompt(title, original_description, dataset_sample)
-        
+
         # Make a request to the OpenAI API to generate the topic
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
-                {"role": "system", "content": "You are an assistant for generating concise dataset topics."},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system",
+                    "content": "You are an assistant for generating concise dataset topics.",
+                },
+                {"role": "user", "content": prompt},
             ],
-            temperature=self.temperature
+            temperature=self.temperature,
         )
-        
+
         # Extract the response content
         return response.choices[0].message.content.strip()

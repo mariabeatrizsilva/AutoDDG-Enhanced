@@ -1,5 +1,7 @@
 import openai
+
 # from openai import OpenAI
+
 
 class Prompt:
     def __init__(self):
@@ -39,47 +41,56 @@ class Prompt:
 
 
 class GPTEvaluator:
-    def __init__(self):
+    def __init__(self, gpt4_api_key=""):
         # openai.api_key = GPT4_API_KEY
         self.client = openai.OpenAI(
-            api_key = GPT4_API_KEY,
+            api_key=gpt4_api_key,
         )
         self.model = "gpt-4o"
         self.prompt = Prompt()
-        
+
     def evaluate(self, description):
-        content = self.prompt.EVALUATE_PROMPT + "Description: " + description + "\n" + "Evaluation Form (scores ONLY): "
-        return self.generate(content)                            
-        
+        content = (
+            self.prompt.EVALUATE_PROMPT
+            + "Description: "
+            + description
+            + "\n"
+            + "Evaluation Form (scores ONLY): "
+        )
+        return self.generate(content)
+
     def generate(self, content):
         evaluation = self.client.chat.completions.create(
             model=self.model,
             messages=[
-                    {
-                        "role": "system", 
-                        "content": self.prompt.EVALUATE_SYSETM},
-                    {
-                        "role": "user", 
-                        "content":  content},
-                ],
-            temperature=0.3)
+                {"role": "system", "content": self.prompt.EVALUATE_SYSETM},
+                {"role": "user", "content": content},
+            ],
+            temperature=0.3,
+        )
         score = evaluation.choices[0].message.content
         return score
-    
-    
+
+
 class LLaMAEvaluator:
-    def __init__(self):
+    def __init__(self, llama_api_key=""):
         self.client = openai.OpenAI(
-            api_key = LLAMA_API_KEY,
-            base_url = "https://api.deepinfra.com/v1/openai",
+            api_key=llama_api_key,
+            base_url="https://api.deepinfra.com/v1/openai",
         )
         self.model = "meta-llama/Meta-Llama-3.1-70B-Instruct"
         self.prompt = Prompt()
-        
+
     def evaluate(self, description):
-        content = self.prompt.EVALUATE_PROMPT + "Description: " + description + "\n" + "Evaluation Form (scores ONLY): "
-        return self.generate(content)                            
-        
+        content = (
+            self.prompt.EVALUATE_PROMPT
+            + "Description: "
+            + description
+            + "\n"
+            + "Evaluation Form (scores ONLY): "
+        )
+        return self.generate(content)
+
     def generate(self, content):
         chat_completion = self.client.chat.completions.create(
             model=self.model,

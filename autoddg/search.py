@@ -8,8 +8,9 @@ from numpy.linalg import norm
 from fastembed import SparseTextEmbedding
 
 # Download NLTK stopwords if not already done
-nltk.download('punkt')
-nltk.download('stopwords')
+nltk.download("punkt")
+nltk.download("stopwords")
+
 
 class SimpleSearchEngine:
     def __init__(self, similarity="BM25"):
@@ -19,18 +20,18 @@ class SimpleSearchEngine:
         """
         self.documents = []  # List of documents
         self.doc_ids = []  # Track document IDs
-        self.qrels = [] # Track query relevance
+        self.qrels = []  # Track query relevance
         self.similarity = similarity
         self.bm25_model = None
         self.tfidf_model = None
         self.vectorizer = None
         self.sparse_text_embedding = None
-        self.stop_words = set(stopwords.words('english'))  # NLTK stop words
+        self.stop_words = set(stopwords.words("english"))  # NLTK stop words
 
     def cosine_similarity(self, a, b):
         """Computes the cosine similarity between vectors a and b."""
         return np.dot(a, b) / (norm(a) * norm(b))
-    
+
     def cosine_similarity_sparse(self, vec1, vec2):
         # vec1 and vec2 are dictionaries with 'values' and 'indices'
         # Step 1: Compute dot product (only over common indices)
@@ -38,19 +39,19 @@ class SimpleSearchEngine:
         indices2 = vec2.indices
         values1 = vec1.values
         values2 = vec2.values
-        
+
         # Create dictionaries for quick lookup
         dict1 = {idx: val for idx, val in zip(indices1, values1)}
         dict2 = {idx: val for idx, val in zip(indices2, values2)}
-        
+
         # Compute dot product
         common_indices = set(indices1).intersection(indices2)
         dot_product = sum(dict1[i] * dict2[i] for i in common_indices)
-        
+
         # Step 2: Compute norms
         norm1 = np.sqrt(np.sum(np.square(values1)))
         norm2 = np.sqrt(np.sum(np.square(values2)))
-        
+
         # Step 3: Calculate cosine similarity
         if norm1 == 0 or norm2 == 0:  # Avoid division by zero
             return 0.0
@@ -87,11 +88,13 @@ class SimpleSearchEngine:
                 self.documents.append(preprocessed_text)
 
             self.doc_ids.append(doc_id)
-            self.qrels.append(doc['qrel'])
-        
+            self.qrels.append(doc["qrel"])
+
         # Build models based on the chosen similarity
         if self.similarity == "BM25":
-            self.bm25_model = BM25Okapi([self.preprocess(doc) for doc in self.documents])
+            self.bm25_model = BM25Okapi(
+                [self.preprocess(doc) for doc in self.documents]
+            )
         elif self.similarity == "TFIDF":
             self.vectorizer = TfidfVectorizer()
             self.tfidf_model = self.vectorizer.fit_transform(self.documents)
@@ -110,7 +113,7 @@ class SimpleSearchEngine:
         if self.similarity != "COSINE":
             query = self.preprocess(query_str)
             query_str_preprocessed = " ".join(query)
-        
+
         if self.similarity == "BM25":
             # Perform BM25 search
             scores = self.bm25_model.get_scores(query)
@@ -124,9 +127,14 @@ class SimpleSearchEngine:
             query_embedding = query_str
             # print(f"query_embedding: {query_embedding}")
             # print(f"doc_embedding: {self.documents[0]}")
-            scores = [self.cosine_similarity_sparse(query_embedding, doc_embedding) for doc_embedding in self.documents]
+            scores = [
+                self.cosine_similarity_sparse(query_embedding, doc_embedding)
+                for doc_embedding in self.documents
+            ]
         # Sort documents by score and return top results
-        ranked_docs = sorted(zip(self.doc_ids, scores, self.qrels), key=lambda x: x[1], reverse=True)[:size]
+        ranked_docs = sorted(
+            zip(self.doc_ids, scores, self.qrels), key=lambda x: x[1], reverse=True
+        )[:size]
         retrieved_relevance = [doc[2] for doc in ranked_docs]
         ideal_relevance = sorted(self.qrels, reverse=True)[:size]
 
