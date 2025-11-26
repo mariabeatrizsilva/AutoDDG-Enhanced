@@ -6,6 +6,7 @@ venv/
 # Ignore data
 src/autoddg/related/data
 src/autoddg/related/papers
+examples/legacy
 
 # Ignore macOS system files
 .DS_Store
