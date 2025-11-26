@@ -28,6 +28,7 @@ class DatasetDescriptionGenerator:
             "profile_instruction": prompts["profile_instruction"],
             "semantic_instruction": prompts["semantic_instruction"],
             "topic_instruction": prompts["topic_instruction"],
+            "related_work_instruction": prompts["related_work_instruction"],
             "closing_instruction": prompts["closing_instruction"],
         }
         self._system_message = prompts["system_message"].strip()
@@ -41,6 +42,9 @@ class DatasetDescriptionGenerator:
         use_semantic_profile: bool = False,
         data_topic: str | None = None,
         use_topic: bool = False,
+        related_profile: dict | None = None, 
+        use_related_profile: bool = False, 
+
     ) -> str:
         sections: Iterable[str] = [
             self._prompt_segments["introduction"].format(dataset_sample=dataset_sample)
@@ -64,6 +68,12 @@ class DatasetDescriptionGenerator:
                 self._prompt_segments["topic_instruction"].format(data_topic=data_topic)
             )
 
+        if use_related_profile and related_profile:
+            related_summary = related_profile.get("summary", "")
+            prompt_parts.append(
+             self._prompt_segments["related_work_instruction"].format(related_profile=related_summary)
+            )
+
         prompt_parts.extend(
             [
                 self._prompt_segments["closing_instruction"],
@@ -81,6 +91,8 @@ class DatasetDescriptionGenerator:
         use_semantic_profile: bool = False,
         data_topic: str | None = None,
         use_topic: bool = False,
+        related_profile: dict | None = None,
+        use_related_profile: bool = False,
     ) -> Tuple[str, str]:
         """
         Call the model and return prompt and description
@@ -106,6 +118,8 @@ class DatasetDescriptionGenerator:
             use_semantic_profile=use_semantic_profile,
             data_topic=data_topic,
             use_topic=use_topic,
+            related_profile=related_profile,
+            use_related_profile=use_related_profile
         )
 
         response = self.client.chat.completions.create(

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Tuple
+from typing import Any, Tuple, Optional
 
 from beartype import beartype
 from pandas import DataFrame
@@ -9,6 +9,7 @@ from .description import DatasetDescriptionGenerator, SearchFocusedDescription
 from .evaluation import BaseEvaluator
 from .profiling import SemanticProfiler, profile_dataset
 from .topic import DatasetTopicGenerator
+from .related.related import RelatedWorkProfiler
 
 
 @beartype
@@ -111,6 +112,8 @@ class AutoDDG:
         use_profile: bool = False,
         semantic_profile: str | None = None,
         use_semantic_profile: bool = False,
+        related_profile: Optional[dict] = None,
+        use_related_profile: bool = False,
         data_topic: str | None = None,
         use_topic: bool = False,
     ) -> Tuple[str, str]:
@@ -138,6 +141,8 @@ class AutoDDG:
             use_semantic_profile=use_semantic_profile,
             data_topic=data_topic,
             use_topic=use_topic,
+            related_profile=related_profile,
+            use_related_profile=use_related_profile
         )
 
     def profile_dataframe(self, dataframe: DataFrame) -> Tuple[str, str]:
@@ -228,3 +233,55 @@ class AutoDDG:
         """
 
         self.evaluator = evaluator
+    
+    def analyze_related(
+        self,
+        pdf_path: str,
+        dataset_name: str,
+        extraction_prompt: Optional[str] = None,
+        max_pages: Optional[int] = None,
+    ) -> dict:
+        """
+        Analyze a research paper PDF to extract related work context about the dataset.
+        
+        This method extracts contextual information from research papers that describe
+        or use the dataset, providing background about its characteristics, usage, and provenance.
+        
+        Args:
+            pdf_path: Path to the research paper PDF file
+            dataset_name: Name of the dataset to focus extraction on
+            extraction_prompt: Optional custom extraction prompt template.
+                            Use {paper_text} and {dataset_name} as placeholders.
+                            If None, uses the default prompt from prompts.yaml
+            max_pages: Optional limit on number of pages to extract from the PDF
+        
+        Returns:
+            Dictionary containing the related work profile with keys:
+                - summary: Extracted summary about the dataset
+                - dataset_name: Name of the dataset
+                - source_length: Character count of source paper
+        
+        Example:
+            >>> related_profile = auto_ddg.analyze_related(
+            ...     pdf_path="paper.pdf",
+            ...     dataset_name="My Dataset",
+            ...     max_pages=10
+            ... )
+            >>> print(related_profile["summary"])
+        """
+        
+        # Create the profiler with the same client and model
+        profiler = RelatedWorkProfiler(
+            client=self.client,
+            model_name=self.model_name
+        )
+        
+        # Analyze the paper
+        related_profile = profiler.analyze_paper(
+            pdf_path=pdf_path,
+            dataset_name=dataset_name,
+            extraction_prompt=extraction_prompt,
+            max_pages=max_pages
+        )
+        
+        return related_profile
