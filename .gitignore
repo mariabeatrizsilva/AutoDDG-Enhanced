@@ -3,6 +3,10 @@ venv/
 .venv/
 .env
 
+# Ignore data
+src/autoddg/related/data
+src/autoddg/related/papers
+
 # Ignore macOS system files
 .DS_Store
 

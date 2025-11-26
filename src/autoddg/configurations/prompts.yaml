@@ -19,9 +19,10 @@ dataset_description:
   topic_instruction: |
     Moreover, the dataset topic is: {data_topic}. Based on this topic, please add sentence(s) describing what this dataset can be used for.
   related_work_instruction: |
-    Furthermore, related research work provides the following context about this dataset:
+    Additionally, research literature provides this context about the dataset:
     {related_profile}
-    Based on this information, please add sentence(s) that contextualize the dataset within its research domain and explain its provenance, typical applications, and/or limitations.
+    
+    Based on this information, please add sentence(s) describing the insights about this dataset from this research (such as actual usage, findings, or limitations).
   closing_instruction: |
     Question: Based on the information above and the requirements, provide a dataset description in sentences. Use only natural, readable sentences without special formatting.
 
@@ -178,15 +179,32 @@ topic_generation:
 
 related_work_extraction:
   default_prompt: |
-    You are an expert academic research assistant. Your task is to analyze the provided research paper and extract specific details about a named dataset.
+    You are an expert academic research assistant. Extract key research context about the dataset: **{dataset_name}**.
     
     **INSTRUCTIONS:**
-    1. Focus solely on the dataset named: **{dataset_name}**.
-    2. Provide a concise summary (approx. 3-4 paragraphs, or 500 words maximum) of its **context**, **key characteristics** (e.g., size, source, format, date range), and **how the authors used it** in their research.
-    3. Do not include any content from this prompt or any introductory phrases (like "Based on the paper...") in your final answer.
+    Provide a focused summary (300-400 words) covering these aspects:
     
+    1. **Research Domain & Applications**
+       - What field or discipline uses this dataset?
+       - What specific research questions or problems does it address?
+    
+    2. **Dataset Usage in Practice**
+       - How did researchers actually use this dataset in their study?
+       - What analyses or experiments did they perform?
+       - What were the key findings or results?
+    
+    3. **Dataset Characteristics & Provenance**
+       - How was the data collected or generated?
+       - What makes this dataset unique or valuable?
+       - Any preprocessing or curation steps mentioned?
+    
+    4. **Limitations & Challenges**
+       - What limitations did researchers identify?
+       - What challenges did they encounter using this data?
+       - Any biases or caveats mentioned?
+        
     **RESEARCH PAPER TEXT:**
     {paper_text}
   
   system_message: |
-    You are an expert academic research assistant specializing in extracting dataset information from research papers.
+    You are an expert academic research assistant specializing in extracting dataset information from research papers. Your goal is to capture the research story and practical insights about datasets, not just technical specifications.  
