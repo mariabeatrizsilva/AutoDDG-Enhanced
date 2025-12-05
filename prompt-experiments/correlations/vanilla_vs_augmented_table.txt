@@ -1,0 +1,12 @@
+VANILLA VS AUGMENTED COMPARISON
+========================================================================================================================
+
+                  Metric  Vanilla_Mean  Augmented_Mean  Difference  Percent_Change
+                 bert_f1      0.825068        0.827297    0.002229        0.270181
+                  rouge1      0.273643        0.272998   -0.000645       -0.235704
+ strict_coverage_overall      0.396667        0.421091    0.024424        6.157372
+lenient_coverage_overall      0.367333        0.406121    0.038788       10.559314
+      Completeness_Score      8.400000        8.781818    0.381818        4.545455
+       Conciseness_Score      7.600000        7.809091    0.209091        2.751196
+       Readability_Score      8.800000        8.854545    0.054545        0.619835
+ LLM_Preference_Win_Rate     51.818182       48.181818   -3.636364       -3.636364

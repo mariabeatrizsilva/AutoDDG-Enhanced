@@ -1,0 +1,10 @@
+KEY METRIC RELATIONSHIPS
+========================================================================================================================
+
+               Metric_1                Metric_2  Pearson_r  Pearson_p  Spearman_r  Spearman_p   n
+strict_coverage_overall       Readability_Score   0.200789   0.035439    0.044933    0.641132 110
+strict_coverage_overall       Conciseness_Score   0.034292   0.722098   -0.109991    0.252667 110
+strict_coverage_overall                 Score_B   0.250639   0.008266    0.226312    0.017435 110
+                bert_f1                 Score_B  -0.077764   0.419379   -0.099118    0.302907 110
+     Completeness_Score strict_coverage_overall   0.177960   0.062883    0.258872    0.006319 110
+      Readability_Score                 Score_B   0.162806   0.089249    0.145807    0.128536 110

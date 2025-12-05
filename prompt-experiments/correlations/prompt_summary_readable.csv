@@ -1,0 +1,12 @@
+Prompt_Type,Coverage_Improvement,Completeness_Improvement,Readability_Improvement,Win_Rate_%,Composite_Score,Description
+research_long,17.310924369747895,3.5714285714285587,2.2727272727272645,40.0,7.718360071301238,Research Long - Detailed research context
+Structured_v1-llm-relevance-chunks-new-integration,13.10924369747899,5.952380952380952,2.2727272727272645,60.0,7.111450640862401,Structured v1 New Integration - Enhanced integration
+V1_Revised,13.403361344537808,4.761904761904765,2.2727272727272645,70.0,6.81266445972328,V1 Revised - Basic augmentation with citations
+research_long_v2,10.924369747899146,4.761904761904765,0.0,60.0,5.228758169934637,Research Long v2 - Enhanced detailed context
+Structured_v1,2.3949579831932795,7.142857142857138,2.2727272727272645,60.0,3.9368474662592274,Structured v1 - Structured format
+Structured_v1-llm-relevance-chunks,4.159663865546222,5.952380952380952,1.1363636363636322,20.0,3.7494694847636025,Structured v1 LLM Relevance - LLM-filtered chunks
+Structured_v1-llm-relevance-chunks-remove-references,9.873949579831937,4.761904761904765,-3.409090909090917,30.0,3.7422544775485953,Structured v1 Remove Refs - References removed
+V2_Hybrid,-1.8067226890756412,5.952380952380952,2.2727272727272645,50.0,2.139461845344192,V2 Hybrid - Combination approach
+Structured_v1-newchunking,4.033613445378155,0.0,-1.1363636363636525,50.0,0.9657499363381673,Structured v1 New Chunking - Improved text chunking
+Structured_v1-json,-3.193277310924368,4.761904761904765,-1.1363636363636525,50.0,0.1440879382055816,Structured v1 JSON - JSON-based structure
+research_short,-2.478991596638662,2.3809523809523725,0.0,40.0,-0.03267973856209657,Research Short - Concise research context

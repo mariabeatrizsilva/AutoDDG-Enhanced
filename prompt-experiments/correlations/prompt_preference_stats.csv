@@ -1,0 +1,12 @@
+Prompt_Type,Total_Evaluations,Augmented_Wins,Vanilla_Wins,Ties,Win_Rate_%,Avg_Score_Vanilla,Avg_Score_Augmented,Score_Difference
+V1_Revised,10,7,3,0,70.0,3.9,4.4,0.5000000000000004
+V2_Hybrid,10,5,5,0,50.0,4.0,4.0,0.0
+Structured_v1,10,6,4,0,60.0,4.0,4.2,0.20000000000000018
+Structured_v1-json,10,5,5,0,50.0,3.9,4.0,0.10000000000000009
+Structured_v1-newchunking,10,5,5,0,50.0,3.8,3.9,0.10000000000000009
+Structured_v1-llm-relevance-chunks,10,2,8,0,20.0,4.0,3.4,-0.6000000000000001
+Structured_v1-llm-relevance-chunks-new-integration,10,6,4,0,60.0,3.9,4.1,0.19999999999999973
+Structured_v1-llm-relevance-chunks-remove-references,10,3,7,0,30.0,3.9,3.6,-0.2999999999999998
+research_long,10,4,6,0,40.0,3.9,3.7,-0.19999999999999973
+research_short,10,4,6,0,40.0,3.9,3.8,-0.10000000000000009
+research_long_v2,10,6,4,0,60.0,3.9,4.2,0.30000000000000027

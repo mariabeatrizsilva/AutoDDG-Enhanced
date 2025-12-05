@@ -1,0 +1,9 @@
+Metric,Vanilla,Augmented,Difference,Percent_Change
+BERT-F1,0.8251,0.8273,0.0022,+0.27%
+ROUGE-1,0.2736,0.2730,-0.0006,-0.24%
+Coverage (Strict),0.3967,0.4211,0.0244,+6.16%
+Coverage (Lenient),0.3673,0.4061,0.0388,+10.56%
+Completeness Score,8.4000,8.7818,0.3818,+4.55%
+Conciseness Score,7.6000,7.8091,0.2091,+2.75%
+Readability Score,8.8000,8.8545,0.0545,+0.62%
+LLM Preference Win Rate,51.8182,48.1818,-3.6364,-3.64%
