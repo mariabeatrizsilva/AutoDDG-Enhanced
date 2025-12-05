@@ -18,6 +18,7 @@ import pandas as pd
 from openai import OpenAI
 from evaluate import load
 from coverage import CoverageScorer
+from utils import _safe_json_load  
 # ============================================
 # INITIALIZATION
 # ============================================
@@ -67,7 +68,7 @@ def compute_bertscore(reference: str, prediction: str):
 
 
 
-def extract_summary_profile(description_text: str, client, model_name: str):
+def extract_summary_profile_strict(description_text: str, client, model_name: str):
     """
     Extract a structured profile of the dataset description using your LLM client.
     It outputs the exact JSON schema required by CoverageScorer().
@@ -81,6 +82,74 @@ If not present, set to null.
 
 Return ONLY valid JSON:
 
+{{
+  "basic_info": {{
+    "domain_or_field": null,
+    "primary_purpose": null
+  }},
+  "data_characteristics": {{
+    "size_or_scale": null,
+    "data_format": null,
+    "data_types": null,
+    "temporal_coverage": null,
+    "sample_unit": null
+  }},
+  "provenance": {{
+    "collection_method": null,
+    "data_source": null,
+    "collection_date": null,
+    "preprocessing_steps": null
+  }},
+  "usage_context": {{
+    "typical_applications": null,
+    "research_questions_addressed": null,
+    "benchmark_or_evaluation_role": null
+  }},
+  "quality_and_limitations": {{
+    "known_limitations": null,
+    "biases_or_caveats": null,
+    "quality_issues": null,
+    "challenges_in_use": null
+  }}
+}}
+
+DESCRIPTION:
+\"\"\"{description_text}\"\"\"
+
+Return JSON ONLY. No extra text.
+"""
+
+    response = client.chat.completions.create(
+        model=model_name,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0
+    )
+
+    raw = response.choices[0].message.content
+    
+    return _safe_json_load(raw)
+
+def extract_summary_profile_lenient(description_text: str, client, model_name: str):
+    """
+    Extract a structured profile of the dataset description using your LLM client.
+    It outputs the exact JSON schema required by CoverageScorer().
+    """
+    prompt = f"""
+You are a dataset documentation analysis assistant.
+
+Extract fields FROM THE DESCRIPTION BELOW.
+
+Rules:
+- You MAY INFER the following fields if they are clearly implied:
+  basic_info.domain_or_field
+  basic_info.primary_purpose
+  usage_context.typical_applications
+  usage_context.research_questions_addressed
+- For ALL OTHER fields: only extract if explicitly stated.
+- NEVER invent numbers, dates, institutions, dataset size, file formats, or preprocessing steps.
+- If not present, set to null.
+
+Return ONLY valid JSON in this exact schema:
 {{
   "basic_info": {{
     
@@ -146,8 +215,6 @@ Return JSON ONLY. No extra text.
                 "usage_context": {},
                 "quality_and_limitations": {}
             }
-            
-            
 
 
 # ============================================
@@ -178,21 +245,48 @@ def evaluate_all(row, client,model_name):
     # --------------------------
     # Coverage score (reference-free)
     # --------------------------
-    extraction_result = extract_summary_profile(
+   
+    
+    extraction_result_lenient = extract_summary_profile_lenient(
         description_text=generated_desc,
         client=client,               
         model_name=model_name
     )
     
-    print(json.dumps(extraction_result, indent=2))
-    coverage = CoverageScorer()
-    coverage_results = coverage.calculate_coverage(extraction_result)
-
-    metrics["coverage_overall"] = coverage_results["overall_score"]
+    ##STRICT COVERAGE: 
+    extraction_result_strict = extract_summary_profile_strict(
+        description_text=generated_desc,
+        client=client,               
+        model_name=model_name
+    )
+     
+    coverage_strict = CoverageScorer()
+    strict_coverage_results = coverage_strict.calculate_coverage(extraction_result_strict)
+    metrics["coverage_overall"] = strict_coverage_results["overall_score"]
 
     # dimension-level scores
-    for dim, val in coverage_results["dimension_scores"].items():
-        metrics[f"coverage_{dim}"] = val
+    for dim, val in strict_coverage_results["dimension_scores"].items():
+        metrics[f"strict_coverage_{dim}"] = val
+
+
+
+
+    ###Lenient Cov 
+    
+    extraction_result_lenient = extract_summary_profile_lenient(
+        description_text=generated_desc,
+        client=client,               
+        model_name=model_name
+    )
+
+
+    coverage_lenient = CoverageScorer()
+    lenient_coverage_results = coverage_strict.calculate_coverage(extraction_result_strict)
+    metrics["coverage_overall"] = lenient_coverage_results["overall_score"]
+
+    # dimension-level scores
+    for dim, val in lenient_coverage_results["dimension_scores"].items():
+        metrics[f"lenient_coverage_{dim}"] = val
 
 
     return metrics

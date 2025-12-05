@@ -197,3 +197,66 @@ def run_description_experiment(
         
     print(f"\n✅ Experiment complete for ID {dataset_id}.")
     print(f"{'='*70}\n")
+    
+    
+    
+    # utils.py
+
+import json
+import re
+
+def _safe_json_load(raw_text: str):
+    """
+    Safely parse JSON from LLM responses that may contain markdown code blocks,
+    extra text, or other formatting issues.
+    
+    Args:
+        raw_text: Raw string response from LLM
+        
+    Returns:
+        Parsed JSON dict, or empty schema on failure
+    """
+    if not raw_text:
+        return _empty_schema()
+    
+    # Try direct parsing first
+    try:
+        return json.loads(raw_text)
+    except json.JSONDecodeError:
+        pass
+    
+    # Remove markdown code blocks (```json ... ``` or ``` ... ```)
+    cleaned = raw_text.strip()
+    
+    # Pattern 1: ```json ... ```
+    json_block_pattern = r'```(?:json)?\s*(.*?)\s*```'
+    match = re.search(json_block_pattern, cleaned, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(1))
+        except json.JSONDecodeError:
+            pass
+    
+    # Pattern 2: Find first { to last }
+    try:
+        start = cleaned.index('{')
+        end = cleaned.rindex('}') + 1
+        json_str = cleaned[start:end]
+        return json.loads(json_str)
+    except (ValueError, json.JSONDecodeError):
+        pass
+    
+    # If all else fails, return empty schema
+    print("⚠ WARNING: Could not parse JSON from LLM response — returning empty schema.")
+    return _empty_schema()
+
+
+def _empty_schema():
+    """Return the empty schema structure expected by CoverageScorer"""
+    return {
+        "basic_info": {},
+        "data_characteristics": {},
+        "provenance": {},
+        "usage_context": {},
+        "quality_and_limitations": {}
+    }
