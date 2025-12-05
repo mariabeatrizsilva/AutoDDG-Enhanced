@@ -106,8 +106,7 @@ class PreferenceEvaluator(BaseEvaluator):
     # 3. Override evaluate to accept two descriptions
     def evaluate(self, description_a: str, description_b: str) -> str:
         """
-        Evaluate the two given description texts & Return the raw JSON response 
-        from the model indicating preference.
+        Evaluate the two given description texts & Return the raw JSON response from the model indicating preference.
         """
         content = self._build_content(description_a, description_b)
         # Note: self._generate will use the _system_message defined in __init__
