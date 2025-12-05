@@ -247,12 +247,6 @@ def evaluate_all(row, client,model_name):
     # --------------------------
    
     
-    extraction_result_lenient = extract_summary_profile_lenient(
-        description_text=generated_desc,
-        client=client,               
-        model_name=model_name
-    )
-    
     ##STRICT COVERAGE: 
     extraction_result_strict = extract_summary_profile_strict(
         description_text=generated_desc,
@@ -262,14 +256,11 @@ def evaluate_all(row, client,model_name):
      
     coverage_strict = CoverageScorer()
     strict_coverage_results = coverage_strict.calculate_coverage(extraction_result_strict)
-    metrics["coverage_overall"] = strict_coverage_results["overall_score"]
+    metrics["strict_coverage_overall"] = strict_coverage_results["overall_score"]
 
     # dimension-level scores
     for dim, val in strict_coverage_results["dimension_scores"].items():
         metrics[f"strict_coverage_{dim}"] = val
-
-
-
 
     ###Lenient Cov 
     
@@ -281,8 +272,8 @@ def evaluate_all(row, client,model_name):
 
 
     coverage_lenient = CoverageScorer()
-    lenient_coverage_results = coverage_strict.calculate_coverage(extraction_result_strict)
-    metrics["coverage_overall"] = lenient_coverage_results["overall_score"]
+    lenient_coverage_results = coverage_lenient.calculate_coverage(extraction_result_lenient)
+    metrics["lenient_coverage_overall"] = lenient_coverage_results["overall_score"]
 
     # dimension-level scores
     for dim, val in lenient_coverage_results["dimension_scores"].items():

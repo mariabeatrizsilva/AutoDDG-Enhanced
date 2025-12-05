@@ -23,8 +23,11 @@ def load_and_preprocess_data(file_path):
         'Completeness_Score', 'Conciseness_Score', 'Readability_Score',
         'bert_precision', 'bert_recall', 'bert_f1',
         'rouge1', 'rouge2', 'rougeL', 'rougeLsum',
-        'coverage_overall', 'coverage_basic_info', 'coverage_data_characteristics',
-        'coverage_provenance', 'coverage_usage_context', 'coverage_quality_and_limitations'
+        'strict_coverage_overall', 'strict_coverage_basic_info', 'strict_coverage_data_characteristics',
+            'strict_coverage_provenance', 'strict_coverage_usage_context', 'strict_coverage_quality_and_limitations',
+        'lenient_coverage_overall', 'lenient_coverage_basic_info', 'lenient_coverage_data_characteristics',
+            'lenient_coverage_provenance', 'lenient_coverage_usage_context', 'lenient_coverage_quality_and_limitations'
+
     ]
     for col in score_columns:
         df[col] = pd.to_numeric(df[col], errors='coerce')
@@ -103,9 +106,14 @@ if __name__ == '__main__':
     if data is not None:
         
         # Define score groups for plotting
-        coverage_cols = [
-            'coverage_overall', 'coverage_basic_info', 'coverage_data_characteristics',
-            'coverage_provenance', 'coverage_usage_context', 'coverage_quality_and_limitations'
+        strict_coverage_cols = [
+        'strict_coverage_overall', 'strict_coverage_basic_info', 'strict_coverage_data_characteristics',
+            'strict_coverage_provenance', 'strict_coverage_usage_context', 'strict_coverage_quality_and_limitations'
+        ]
+
+        lenient_coverage_cols = [
+        'lenient_coverage_overall', 'lenient_coverage_basic_info', 'lenient_coverage_data_characteristics',
+            'lenient_coverage_provenance', 'lenient_coverage_usage_context', 'lenient_coverage_quality_and_limitations'
         ]
         
         bert_cols = ['bert_precision', 'bert_recall', 'bert_f1']
@@ -115,17 +123,25 @@ if __name__ == '__main__':
         # 1. Coverage Plots
         generate_violin_plots(
             data, 
-            columns=coverage_cols, 
-            title='Analysis of Coverage Scores by Prompt Type',
-            filename='coverage_scores_violin_plots.png'
+            columns=strict_coverage_cols, 
+            title='Analysis of Strict Coverage Scores by Prompt Type',
+            filename='plots/coverage_scores_strict_violin_plots.png'
         )
+
+        generate_violin_plots(
+            data, 
+            columns=lenient_coverage_cols, 
+            title='Analysis of Lenient Coverage Scores by Prompt Type',
+            filename='plots/coverage_scores_lenient_violin_plots.png'
+        )
+
 
         # 2. BERT Plots
         generate_violin_plots(
             data, 
             columns=bert_cols, 
             title='Analysis of BERT Similarity Scores by Prompt Type',
-            filename='bert_scores_violin_plots.png'
+            filename='plots/bert_scores_violin_plots.png'
         )
 
         # 3. ROUGE Plots
@@ -133,7 +149,7 @@ if __name__ == '__main__':
             data, 
             columns=rouge_cols, 
             title='Analysis of ROUGE Metric Scores by Prompt Type',
-            filename='rouge_scores_violin_plots.png'
+            filename='plots/rouge_scores_violin_plots.png'
         )
 
         print("\nAnalysis complete. Check the generated PNG files.")

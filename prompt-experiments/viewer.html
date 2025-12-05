@@ -12,6 +12,14 @@
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                     },
+                    colors: {
+                        // Added Teal for Lenient Coverage Scores
+                        teal: {
+                            100: '#ccfbf1',
+                            600: '#0d9488',
+                            800: '#0f766e',
+                        }
+                    }
                 }
             }
         }
@@ -19,7 +27,8 @@
     <style>
         /* Updated styles for smaller, more numerous score boxes */
         .score-box {
-            @apply p-2 rounded-lg text-sm font-semibold flex flex-col items-center justify-center transition duration-300 min-w-[70px]; 
+            /* Increased min-w to make them look more substantial in the preference section */
+            @apply p-2 rounded-lg text-sm font-semibold flex flex-col items-center justify-center transition duration-300 min-w-[120px]; 
         }
         .score-label {
             @apply text-xs font-normal text-gray-500 text-center leading-tight mt-1; /* Adjusted for better wrap */
@@ -30,6 +39,15 @@
         .content-card {
             @apply bg-white p-6 rounded-xl shadow-lg border border-gray-100;
         }
+        /* Custom preference card styles */
+        .preference-card-winner {
+            @apply border-4 border-green-400 bg-green-50 shadow-xl;
+        }
+        .preference-card-loser {
+            @apply border-4 border-red-400 bg-red-50 shadow-md;
+        }
+
+        /* REMOVED .preference-score-value */
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen p-4 sm:p-8 font-sans">
@@ -37,26 +55,34 @@
     <div class="max-w-6xl mx-auto">
         <header class="text-center mb-10">
             <h1 class="text-4xl font-extrabold text-gray-900">Dataset Description Comparator</h1>
-            <p class="mt-2 text-lg text-gray-600">Analyze Vanilla vs. Augmented descriptions and their grounding profiles.</p>
+            <p class="mt-2 text-lg text-gray-600">Analyze description metrics and LLM preference evaluations.</p>
         </header>
 
         <div id="controlPanel" class="mb-8 p-6 bg-white rounded-xl shadow-2xl sticky top-0 z-10">
-            <div class="mb-6 p-4 border-2 border-dashed border-blue-300 rounded-xl bg-blue-50">
-                <label for="fileInput" class="block text-lg font-bold text-blue-700 mb-2">1. Upload your CSV Results File:</label>
-                <input type="file" id="fileInput" accept=".csv" class="w-full p-3 border border-blue-400 bg-white rounded-lg shadow-sm cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200">
-                <p id="fileStatus" class="mt-2 text-sm text-gray-600 font-medium">Please select your `results.csv` file to begin.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 border-2 border-dashed border-blue-300 rounded-xl bg-blue-50">
+                    <label for="fileInput" class="block text-lg font-bold text-blue-700 mb-2">1. Upload Primary Results CSV:</label>
+                    <input type="file" id="fileInput" accept=".csv" class="w-full p-3 border border-blue-400 bg-white rounded-lg shadow-sm cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200">
+                    <p id="fileStatus" class="mt-2 text-sm text-gray-600 font-medium">Please select your primary `results.csv` file.</p>
+                </div>
+
+                <div class="p-4 border-2 border-dashed border-purple-300 rounded-xl bg-purple-50">
+                    <label for="preferenceFileInput" class="block text-lg font-bold text-purple-700 mb-2">2. Upload Preference Evaluations CSV:</label>
+                    <input type="file" id="preferenceFileInput" accept=".csv" class="w-full p-3 border border-purple-400 bg-white rounded-lg shadow-sm cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200">
+                    <p id="preferenceFileStatus" class="mt-2 text-sm text-gray-600 font-medium">Please select `preference_evaluations_incremental.csv`.</p>
+                </div>
             </div>
 
-            <div id="selectorContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
+            <div id="selectorContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 hidden">
                 <div>
-                    <label for="datasetSelector" class="block text-sm font-medium text-gray-700 mb-2">2. Select Dataset Name:</label>
+                    <label for="datasetSelector" class="block text-sm font-medium text-gray-700 mb-2">3. Select Dataset Name:</label>
                     <select id="datasetSelector" onchange="loadDataset()" class="w-full p-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
                         <option value="">-- Please Select a Dataset --</option>
                     </select>
                 </div>
 
                 <div>
-                    <label for="promptTypeSelector" class="block text-sm font-medium text-gray-700 mb-2">3. Select Prompt Type (Augmented):</label>
+                    <label for="promptTypeSelector" class="block text-sm font-medium text-gray-700 mb-2">4. Select Prompt Type (Augmented):</label>
                     <select id="promptTypeSelector" onchange="showAugmentedResult()" disabled class="w-full p-3 border border-gray-300 bg-gray-100 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out disabled:opacity-60">
                         <option value="">-- Select an Augmented Prompt --</option>
                     </select>
@@ -65,6 +91,18 @@
         </div>
 
         <div id="resultsArea" class="space-y-10 hidden">
+            <div id="preferenceSection" class="content-card border-purple-200 border-2 hidden">
+                <h2 class="text-2xl font-bold text-purple-700 border-b pb-3 mb-4 flex justify-between items-center">
+                    <span>LLM Preference Evaluation</span>
+                    <span id="preferenceResult" class="text-base font-medium px-3 py-1 rounded-full"></span>
+                </h2>
+                <div id="preferenceScores" class="flex flex-wrap gap-4">
+                    </div>
+                <div class="mt-6 p-4 rounded-lg bg-gray-100 border border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-3">Rationale:</h3>
+                    <p id="rationaleText" class="text-base text-gray-700 italic">No preference data loaded or available for this comparison.</p>
+                </div>
+            </div>
             <div id="vanillaSection" class="content-card">
                 <h2 class="text-2xl font-bold text-gray-800 border-b pb-3 mb-4">Vanilla AutoDDG Description (Baseline)</h2>
                 <div id="vanillaScores" class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3 mb-6">
@@ -102,32 +140,41 @@
     <script>
         let parsedData = [];
         let groupedData = {};
+        let preferenceData = {}; // New global variable for preference evaluations
 
-        // Define all 16 score fields, their labels, and their colors/formats
+        // Define all 22 score fields, their labels, and their colors/formats
         const scoreDefinitions = [
-            // Original Scores (Integers) - FIXED: Use Math.round to display cleanly, read as float
+            // Original Scores
             { key: 'Completeness_Score', label: 'Completeness', color: 'green', format: (s) => s != null ? Math.round(s) : 0 },
             { key: 'Conciseness_Score', label: 'Conciseness', color: 'indigo', format: (s) => s != null ? Math.round(s) : 0 },
             { key: 'Readability_Score', label: 'Readability', color: 'red', format: (s) => s != null ? Math.round(s) : 0 },
 
-            // New BERT Scores (Floats)
+            // BERT Scores
             { key: 'bert_precision', label: 'BERT Precision', color: 'yellow', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
             { key: 'bert_recall', label: 'BERT Recall', color: 'yellow', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
             { key: 'bert_f1', label: 'BERT F1', color: 'yellow', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
 
-            // New ROUGE Scores (Floats)
+            // ROUGE Scores
             { key: 'rouge1', label: 'ROUGE-1', color: 'purple', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
             { key: 'rouge2', label: 'ROUGE-2', color: 'purple', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
             { key: 'rougeL', label: 'ROUGE-L', color: 'purple', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
             { key: 'rougeLsum', label: 'ROUGE-Lsum', color: 'purple', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
 
-            // New Coverage Scores (Floats)
-            { key: 'coverage_overall', label: 'Coverage Overall', color: 'cyan', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
-            { key: 'coverage_basic_info', label: 'Coverage Basic', color: 'blue', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
-            { key: 'coverage_data_characteristics', label: 'Coverage Data', color: 'blue', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
-            { key: 'coverage_provenance', label: 'Coverage Provenance', color: 'blue', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
-            { key: 'coverage_usage_context', label: 'Coverage Usage', color: 'blue', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
-            { key: 'coverage_quality_and_limitations', label: 'Coverage Quality', color: 'blue', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
+            // Strict Coverage Scores
+            { key: 'strict_coverage_overall', label: 'Strict Cov. Overall', color: 'cyan', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
+            { key: 'strict_coverage_basic_info', label: 'Strict Cov. Basic', color: 'cyan', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
+            { key: 'strict_coverage_data_characteristics', label: 'Strict Cov. Data', color: 'cyan', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
+            { key: 'strict_coverage_provenance', label: 'Strict Cov. Prov.', color: 'cyan', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
+            { key: 'strict_coverage_usage_context', label: 'Strict Cov. Usage', color: 'cyan', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
+            { key: 'strict_coverage_quality_and_limitations', label: 'Strict Cov. Quality', color: 'cyan', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
+
+            // Lenient Coverage Scores
+            { key: 'lenient_coverage_overall', label: 'Lenient Cov. Overall', color: 'teal', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
+            { key: 'lenient_coverage_basic_info', label: 'Lenient Cov. Basic', color: 'teal', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
+            { key: 'lenient_coverage_data_characteristics', label: 'Lenient Cov. Data', color: 'teal', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
+            { key: 'lenient_coverage_provenance', label: 'Lenient Cov. Prov.', color: 'teal', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
+            { key: 'lenient_coverage_usage_context', label: 'Lenient Cov. Usage', color: 'teal', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
+            { key: 'lenient_coverage_quality_and_limitations', label: 'Lenient Cov. Quality', color: 'teal', format: (s) => s != null ? (parseFloat(s) * 100).toFixed(1) + '%' : 'N/A' },
         ];
 
 
@@ -141,7 +188,7 @@
             const data = [];
 
             // Define all headers that should be parsed as numbers (floats)
-            const numberHeaders = scoreDefinitions.map(def => def.key);
+            const numberHeaders = scoreDefinitions.map(def => def.key).concat(['Score_A', 'Score_B']);
 
             for (let i = 1; i < lines.length; i++) {
                 const values = lines[i].split(splitter).map(v => v.trim().replace(/^"|"$/g, ''));
@@ -150,8 +197,6 @@
                     headers.forEach((header, index) => {
                         let value = values[index];
                         
-                        // FIXED: All 16 scores, including the original three, are now consistently parsed as floats 
-                        // from their dedicated CSV columns.
                         if (numberHeaders.includes(header)) {
                             row[header] = parseFloat(value); 
                         } else {
@@ -165,7 +210,20 @@
             return data;
         }
 
-        // Function to group data by Dataset_Name
+        // Function to parse the preference CSV and group by Dataset and Prompt Type B
+        function parsePreferenceCsv(csvString) {
+            const data = parseCsv(csvString); // Reuse the generic CSV parser
+            const groups = {};
+
+            data.forEach(item => {
+                const key = `${item.Dataset_Name}|${item.Prompt_Type_B}`;
+                groups[key] = item;
+            });
+            return groups;
+        }
+
+
+        // Function to group primary data by Dataset_Name
         function groupData(data) {
             const groups = {};
             data.forEach(item => {
@@ -196,7 +254,7 @@
                 const rawValue = item[def.key];
                 let scoreDisplay;
                 try {
-                    // Use the defined format function
+                    // Use the existing format function
                     scoreDisplay = def.format(rawValue); 
                 } catch (e) {
                     scoreDisplay = 'N/A';
@@ -211,8 +269,78 @@
             });
             return html;
         }
-        
-        // --- RENDERING FUNCTIONS ---
+
+        // --- PREFERENCE RENDERING FUNCTIONS (FINAL CORRECTED) ---
+
+        function renderPreferenceSection(datasetName, promptType) {
+            const section = document.getElementById('preferenceSection');
+            const scoresContainer = document.getElementById('preferenceScores');
+            const resultDisplay = document.getElementById('preferenceResult');
+            const rationaleText = document.getElementById('rationaleText');
+            
+            // Reset state
+            section.classList.add('hidden');
+            resultDisplay.className = 'text-base font-medium px-3 py-1 rounded-full';
+            resultDisplay.textContent = '';
+            scoresContainer.innerHTML = '';
+            rationaleText.textContent = 'No preference data loaded or available for this comparison.';
+
+
+            // Look up preference data
+            const key = `${datasetName}|${promptType}`;
+            const match = preferenceData[key];
+
+            if (!match) {
+                return;
+            }
+
+            section.classList.remove('hidden');
+
+            const vanillaScore = parseFloat(match.Score_A).toFixed(1);
+            const augmentedScore = parseFloat(match.Score_B).toFixed(1);
+            rationaleText.textContent = match.Rationale || 'No rationale provided.';
+
+            // Use the standard score-box class with custom background/text to match purple theme
+            let vanillaClasses = 'score-box bg-purple-100 text-purple-800 shadow-lg';
+            let augmentedClasses = 'score-box bg-purple-100 text-purple-800 shadow-lg';
+
+            // Apply preference styling (winner/loser borders)
+            if (match.Preference === 'A') { // Vanilla is preferred
+                resultDisplay.textContent = 'Vanilla Preferred (A)';
+                resultDisplay.classList.add('bg-green-100', 'text-green-800');
+                vanillaClasses += ' preference-card-winner';
+                augmentedClasses += ' preference-card-loser';
+            } else if (match.Preference === 'B') { // Augmented is preferred
+                resultDisplay.textContent = 'Augmented Preferred (B)';
+                resultDisplay.classList.add('bg-green-100', 'text-green-800');
+                augmentedClasses += ' preference-card-winner';
+                vanillaClasses += ' preference-card-loser';
+            } else { // Tie or No Preference
+                resultDisplay.textContent = 'Neutral/Tie';
+                resultDisplay.classList.add('bg-yellow-100', 'text-yellow-800');
+            }
+            
+            // Generate the two scorecards using the standard score-box structure
+            const vanillaCardHtml = `
+                <div id="vanillaPreferenceCard" class="${vanillaClasses}">
+                    <span class="score-value">${vanillaScore}</span>
+                    <span class="score-label text-purple-600">Vanilla Score</span>
+                </div>
+            `;
+            
+            const augmentedCardHtml = `
+                <div id="augmentedPreferenceCard" class="${augmentedClasses}">
+                    <span class="score-value">${augmentedScore}</span>
+                    <span class="score-label text-purple-600">Augmented Score</span>
+                </div>
+            `;
+
+            // Inject the HTML into the container, using flex layout from HTML
+            scoresContainer.innerHTML = vanillaCardHtml + augmentedCardHtml;
+        }
+
+
+        // --- MAIN RENDERING FUNCTIONS ---
 
         function populateDatasetSelector() {
             const selector = document.getElementById('datasetSelector');
@@ -225,18 +353,20 @@
                 selector.appendChild(option);
             });
             
-            // Show selectors and results area
-            document.getElementById('selectorContainer').classList.remove('hidden');
-            document.getElementById('resultsArea').classList.remove('hidden');
-            document.getElementById('fileStatus').textContent = `Successfully loaded ${Object.keys(groupedData).length} unique datasets.`;
+            // Only show selectors and results area if primary data is loaded
+            if (Object.keys(groupedData).length > 0) {
+                document.getElementById('selectorContainer').classList.remove('hidden');
+                document.getElementById('resultsArea').classList.remove('hidden');
+            }
         }
 
         function loadDataset() {
             const datasetName = document.getElementById('datasetSelector').value;
             const promptSelector = document.getElementById('promptTypeSelector');
 
-            // Reset Augmented section
+            // Reset all sections
             resetAugmentedSection();
+            renderPreferenceSection(null, null);
 
             if (!datasetName) {
                 document.getElementById('vanillaDescription').textContent = 'Select a dataset to view the baseline description.';
@@ -251,7 +381,6 @@
             // 1. Load Vanilla Section
             if (data.vanilla) {
                 document.getElementById('vanillaDescription').textContent = data.vanilla.Description_Text;
-                // Use the new comprehensive score box generator
                 document.getElementById('vanillaScores').innerHTML = generateScoreBoxes(data.vanilla);
             } else {
                 document.getElementById('vanillaDescription').textContent = 'Vanilla description not available for this dataset.';
@@ -265,7 +394,6 @@
                     const option = document.createElement('option');
                     option.value = item.Prompt_Type;
                     
-                    // FIXED: Ensure we round the scores for display in the option text
                     const completeness = item.Completeness_Score != null ? Math.round(item.Completeness_Score) : 0;
                     const conciseness = item.Conciseness_Score != null ? Math.round(item.Conciseness_Score) : 0;
                     const readability = item.Readability_Score != null ? Math.round(item.Readability_Score) : 0;
@@ -284,6 +412,7 @@
             document.getElementById('augmentedScores').innerHTML = '';
             document.getElementById('augmentedDescription').textContent = 'Select a prompt type above to see the augmented results.';
             document.getElementById('relatedProfile').textContent = '{ "message": "The grounding profile will appear here." }';
+            renderPreferenceSection(null, null);
         }
 
         function showAugmentedResult() {
@@ -295,12 +424,15 @@
                 return;
             }
 
+            // 1. Load LLM Preference Data
+            renderPreferenceSection(datasetName, promptType);
+
+            // 2. Load Augmented Data
             const data = groupedData[datasetName];
             const augmentedEntry = data.augmented.find(item => item.Prompt_Type === promptType);
 
             if (augmentedEntry) {
                 document.getElementById('augmentedPromptType').textContent = augmentedEntry.Prompt_Type;
-                // Use the new comprehensive score box generator
                 document.getElementById('augmentedScores').innerHTML = generateScoreBoxes(augmentedEntry);
 
                 document.getElementById('augmentedDescription').textContent = augmentedEntry.Description_Text;
@@ -318,29 +450,55 @@
             }
         }
 
-        // Function to process and initialize the viewer with the CSV content
-        function processData(csvString) {
+        // --- FILE PROCESSING FUNCTIONS ---
+
+        function processPrimaryData(csvString) {
             try {
                 parsedData = parseCsv(csvString);
                 groupedData = groupData(parsedData);
                 populateDatasetSelector();
+                document.getElementById('fileStatus').textContent = `Successfully loaded ${Object.keys(groupedData).length} unique datasets.`;
             } catch (e) {
-                console.error("Error processing CSV data:", e);
-                document.getElementById('fileStatus').textContent = `Error: Could not process the CSV file. Details: ${e.message}`;
-                document.getElementById('selectorContainer').classList.add('hidden');
-                document.getElementById('resultsArea').classList.add('hidden');
+                console.error("Error processing Primary CSV data:", e);
+                document.getElementById('fileStatus').textContent = `Error: Could not process the primary CSV file. Details: ${e.message}`;
+            }
+        }
+
+        function processPreferenceData(csvString) {
+            try {
+                preferenceData = parsePreferenceCsv(csvString);
+                document.getElementById('preferenceFileStatus').textContent = `Successfully loaded ${Object.keys(preferenceData).length} preference evaluations.`;
+                // Re-render current results if something is already selected
+                showAugmentedResult(); 
+            } catch (e) {
+                console.error("Error processing Preference CSV data:", e);
+                document.getElementById('preferenceFileStatus').textContent = `Error: Could not process the preference CSV file. Details: ${e.message}`;
             }
         }
 
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', () => {
+            // Event Listener for Primary Data
             document.getElementById('fileInput').addEventListener('change', function(event) {
                 const file = event.target.files[0];
                 if (file) {
                     document.getElementById('fileStatus').textContent = `Loading file: ${file.name}...`;
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        processData(e.target.result);
+                        processPrimaryData(e.target.result);
+                    };
+                    reader.readAsText(file);
+                }
+            });
+
+            // Event Listener for Preference Data
+            document.getElementById('preferenceFileInput').addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    document.getElementById('preferenceFileStatus').textContent = `Loading file: ${file.name}...`;
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        processPreferenceData(e.target.result);
                     };
                     reader.readAsText(file);
                 }
