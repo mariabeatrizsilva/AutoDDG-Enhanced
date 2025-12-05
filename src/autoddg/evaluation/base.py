@@ -79,21 +79,40 @@ class PreferenceEvaluator(BaseEvaluator):
         )
 
         self._evaluation_prompt_template = (
-            "You have been provided with two descriptions (A and B) for a new dataset. "
-            "Your goal is to select the description that would be more helpful to a fellow researcher looking to use this dataset.\n\n"
-            "[CRITERIA]\n"
-            "1. Clarity: Is the description logically structured and easy to understand?\n"
-            "2. Completeness: Does it mention all crucial elements (e.g., source, size, domain, purpose, limitations/bias)?\n"
-            "3. Researcher Utility: Which one is more professionally-toned, objective, and provides the most relevant detail for a research-oriented audience?\n\n"
+            "You have been provided with two descriptions (A and B) for a dataset. "
+            "Your goal is to select the description that would be more helpful to a researcher deciding whether to use this dataset.\n\n"
+            "[CRITERIA - Evaluate each equally]\n"
+            "1. Completeness: Does it cover all crucial information (purpose, data characteristics, collection method, size, use cases, limitations)?\n"
+            "2. Accuracy: Are the technical details precise and well-explained?\n"
+            "3. Clarity: Is it well-structured and easy to understand?\n"
+            "4. Actionability: Does it provide enough detail for a researcher to assess dataset suitability for their project?\n\n"
+            "NOTE: A more comprehensive description is valuable even if slightly longer, as long as all information is relevant to understanding the dataset.\n\n"
             "[DESCRIPTION A]\n{description_a}\n\n"
             "[DESCRIPTION B]\n{description_b}\n\n"
             "[OUTPUT_FORMAT]\n"
-            "Respond ONLY with a JSON object containing the following keys:\n"
-            "- 'Preference': The letter of the preferred description ('A', 'B', or 'Tie').\n"
-            "- 'Score_A': An integer score for Description A (1-5, where 5 is best).\n"
-            "- 'Score_B': An integer score for Description B (1-5, where 5 is best).\n"
-            "- 'Rationale': A detailed, objective paragraph explaining the choice or the tie, referencing the [CRITERIA] above. Focus on specific flaws or strengths in each description."
+            "Respond ONLY with a JSON object containing:\n"
+            "- 'Preference': 'A', 'B', or 'Tie'\n"
+            "- 'Score_A': Integer 1-10 (10 = excellent dataset description)\n"
+            "- 'Score_B': Integer 1-10 (10 = excellent dataset description)\n"
+            "- 'Rationale': Explain your choice by addressing each criterion. "
+            "Identify specific strengths/weaknesses in each description."
         )
+        # self._evaluation_prompt_template = (
+        #     "You have been provided with two descriptions (A and B) for a new dataset. "
+        #     "Your goal is to select the description that would be more helpful to a fellow researcher looking to use this dataset.\n\n"
+        #     "[CRITERIA]\n"
+        #     "1. Clarity: Is the description logically structured and easy to understand?\n"
+        #     "2. Completeness: Does it mention all crucial elements (e.g., source, size, domain, purpose, limitations/bias)?\n"
+        #     "3. Researcher Utility: Which one is more professionally-toned, objective, and provides the most relevant detail for a research-oriented audience?\n\n"
+        #     "[DESCRIPTION A]\n{description_a}\n\n"
+        #     "[DESCRIPTION B]\n{description_b}\n\n"
+        #     "[OUTPUT_FORMAT]\n"
+        #     "Respond ONLY with a JSON object containing the following keys:\n"
+        #     "- 'Preference': The letter of the preferred description ('A', 'B', or 'Tie').\n"
+        #     "- 'Score_A': An integer score for Description A (1-5, where 5 is best).\n"
+        #     "- 'Score_B': An integer score for Description B (1-5, where 5 is best).\n"
+        #     "- 'Rationale': A detailed, objective paragraph explaining the choice or the tie, referencing the [CRITERIA] above. Focus on specific flaws or strengths in each description."
+        # )
 
     # 2. Override _build_content to accept two descriptions
     def _build_content(self, description_a: str, description_b: str) -> str:
