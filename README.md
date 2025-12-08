@@ -50,6 +50,57 @@ prompt, description = pipeline.describe_dataset(
 )
 ```
 
+## 🔬 Interactive Results Viewer
+
+**[🌐 View Live Demo](https://mariabeatrizsilva.github.io/autoddg-enhanced/)** ← Explore our results interactively!
+
+We provide an interactive HTML viewer that lets you explore the generated descriptions and their evaluation metrics side-by-side. The live demo comes pre-loaded with our experimental results.
+
+### Features
+
+- 📊 **Side-by-side comparison** of vanilla vs. augmented descriptions
+- 📈 **All evaluation metrics** displayed per dataset
+- 🤖 **LLM preference judgments** with explanations
+- 📁 **Upload your own data** to visualize your experiments
+
+### Using the Live Viewer
+
+1. **View demo results**: Simply visit the [live viewer](https://mariabeatrizsilva.github.io/autoddg-enhanced/) - our experimental data is pre-loaded!
+
+2. **Use with your own data**: 
+   - Run experiments: `prompt-experiments/experiment_runner.ipynb`
+   - Compute metrics: `prompt-experiments/metric_test.ipynb`
+   - Click "Load Custom Data" in the viewer and upload your CSV
+
+### Running Locally
+
+You can also run the viewer locally:
+```bash
+cd prompt-experiments
+open viewer.html  # Opens in your default browser
+
+# Or with Python's built-in server (avoids CORS issues)
+python -m http.server 8000
+# Then visit http://localhost:8000/viewer.html
+```
+
+### Data Format
+
+The viewer expects two CSV files:
+
+**results-eval.csv**: Contains descriptions and automatic metrics
+```csv
+dataset_name,vanilla_description,augmented_description,bert_f1,rouge1,coverage_strict,...
+```
+
+**preference-eval.csv**: Contains LLM preference judgments
+```csv
+dataset_name,preferred_version,explanation,...
+```
+
+See `prompt-experiments/` for example data files.
+
+
 ## 📊 Results
 
 ### Experiment Design
