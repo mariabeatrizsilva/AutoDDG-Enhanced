@@ -52,7 +52,7 @@ prompt, description = pipeline.describe_dataset(
 
 ## 🔬 Interactive Results Viewer
 
-**[🌐 View Live Demo](https://mariabeatrizsilva.github.io/autoddg-enhanced/)** ← Explore our results interactively!
+**[🌐 View Live Demo](https://mariabeatrizsilva.github.io/AutoDDG-Enhanced/)** ← Explore our results interactively!
 
 We provide an interactive HTML viewer that lets you explore the generated descriptions and their evaluation metrics side-by-side. The live demo comes pre-loaded with our experimental results.
 
@@ -65,7 +65,7 @@ We provide an interactive HTML viewer that lets you explore the generated descri
 
 ### Using the Live Viewer
 
-1. **View demo results**: Simply visit the [live viewer](https://mariabeatrizsilva.github.io/autoddg-enhanced/) - our experimental data is pre-loaded!
+1. **View demo results**: Simply visit the [live viewer](https://mariabeatrizsilva.github.io/AutoDDG-Enhanced/) - our experimental data is pre-loaded!
 
 2. **Use with your own data**: 
    - Run experiments: `prompt-experiments/experiment_runner.ipynb`
