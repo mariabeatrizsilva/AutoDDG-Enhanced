@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-def analyze_preference_data(file_path='preference_evaluations_incremental.csv'):
+def analyze_preference_data(file_path='results-systematic-preference.csv'):
     """
     Loads the preference evaluation data and generates three key visualizations.
     """

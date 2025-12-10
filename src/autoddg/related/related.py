@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, Literal
 
 import yaml
 from beartype import beartype
@@ -156,7 +156,80 @@ class RelatedWorkProfiler:
         chunks = splitter.split_text(paper_text)
         print(f"Original text split into {len(chunks)} chunks.")
         return chunks
+    
+    def chunk_text_with_indices(self, text: str, chunk_size: int, chunk_overlap: int) -> List[tuple]:
+        """
+        Returns a list of tuples: (text_content, start_index, end_index)
+        """
+        if not text:
+            return []
+            
+        chunks = []
+        start = 0
+        text_len = len(text)
+
+        while start < text_len:
+            end = min(start + chunk_size, text_len)
+            chunk_text = text[start:end]
+            
+            # Save the tuple (Text, Start, End)
+            chunks.append((chunk_text, start, end))
+            
+            # Stop if we hit the end
+            if end == text_len:
+                break
+                
+            # Move the window forward (subtract overlap to go back a bit)
+            start = end - chunk_overlap
+            
+        return chunks
    
+    def merge_chunks(self, relevant_chunks: List[tuple]) -> List[str]:
+        """
+        Inputs: List of (text, start, end) tuples that were marked 'Relevant'.
+        Returns: List of clean string blocks with overlaps resolved.
+        """
+        if not relevant_chunks:
+            return []
+
+        # 1. Sort by start index to ensure order
+        sorted_chunks = sorted(relevant_chunks, key=lambda x: x[1])
+        
+        merged_blocks = []
+        
+        # Initialize with the first chunk
+        current_text, current_start, current_end = sorted_chunks[0]
+
+        for i in range(1, len(sorted_chunks)):
+            next_text, next_start, next_end = sorted_chunks[i]
+
+            # CHECK: Are they neighbors? (Does the next one start before the current one ends?)
+            if next_start < current_end:
+                # They overlap! Calculate the non-overlapping part of the new chunk
+                # The 'overlap_len' is how far back the new chunk starts relative to the old end
+                # Actually, simpler: we just want the text from current_end onwards
+                
+                # How much of the next chunk is actually NEW?
+                # It starts at next_start, but we already have data up to current_end.
+                # So we cut off the first (current_end - next_start) characters.
+                start_cut_index = current_end - next_start
+                
+                if start_cut_index < len(next_text):
+                    # Append only the new part
+                    current_text += next_text[start_cut_index:]
+                    current_end = next_end
+            else:
+                # There is a gap. Close the current block and start a new one.
+                merged_blocks.append(current_text)
+                current_text = next_text
+                current_start = next_start
+                current_end = next_end
+
+        # Don't forget the last block
+        merged_blocks.append(current_text)
+        
+        return merged_blocks
+
     def find_anchor_chunks(
         self,
         chunks: List[str],
@@ -460,8 +533,7 @@ class RelatedWorkProfiler:
         chunk_size: int = 2000,
         chunk_overlap: int = 200,
         context_window_size: int = 3,
-        use_keyword_search: bool = True  # toggle between keyword and LLM-based search
-    ) -> dict:
+        extraction_strategy: Literal["full", "keyword", "llm_context"] = "keyword"    ) -> dict:
         """
         Complete pipeline: Extract text from PDF and generate related work profile.
        
@@ -473,7 +545,7 @@ class RelatedWorkProfiler:
             chunk_size: Size of text chunks for processing
             chunk_overlap: Overlap between chunks
             context_window_size: Number of chunks before/after anchor to include
-            use_keyword_search: If True, use keyword-based search (faster, cheaper).
+            extraction_strategy: If True, use keyword-based search (faster, cheaper).
                                If False, use LLM-based relevance scoring (slower, more expensive).
            
         Returns:
@@ -485,50 +557,89 @@ class RelatedWorkProfiler:
         # Step 2: Remove references section (NEW!)
         paper_text = self.remove_references_section(paper_text)
        
-        # Step 3: Chunk the text
-        original_chunks = self.chunk_text(
-            paper_text=paper_text,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
+        logical_context_blocks = []
+
+        all_chunks_with_indices = self.chunk_text_with_indices(
+            paper_text, 
+            chunk_size, 
+            chunk_overlap
         )
-       
-        # Step 4: Find relevant chunks
-        if use_keyword_search:
-            anchor_ids = self.find_anchor_chunks(
-                chunks=original_chunks,
-                dataset_name=dataset_name,
-                min_tokens_to_match=1  
-            )
-           
-            logical_context_blocks = self.get_logical_context_blocks(
-                all_chunks=original_chunks,
-                anchor_chunk_ids=anchor_ids,
-                context_window_size=context_window_size
-            )
-        else:
-            # ALTERNATIVE: LLM-based relevance scoring 
-            relevant_chunks: List[str] = []
-           
-            for i, chunk in enumerate(original_chunks):
-                if self.score_chunk_relevance(chunk_text=chunk, dataset_name=dataset_name):
-                    relevant_chunks.append(chunk)
-           
-            logical_context_blocks = relevant_chunks
-       
-        # Step 5: Handle case where no relevant chunks found
-        if not logical_context_blocks:
-            print("Warning: No relevant chunks found. Falling back to using the full text.")
+
+        relevant_chunks_with_indices = []
+        # Step 3: Branch based on strategy
+        if extraction_strategy == "full":
+            print(f"Strategy 'full': Using entire text ({len(paper_text)} chars).")
+            # Treat the full text as a single context block
             logical_context_blocks = [paper_text]
-       
-        # Step 6: Extract profile using LLM
-        profile = self._extract_profile_from_context(
-            context_blocks=logical_context_blocks,
-            dataset_name=dataset_name,
-            extraction_prompt=extraction_prompt
-        )
+
+        else:
+            # Both 'keyword' and 'llm_context' require chunking first
+            original_chunks = self.chunk_text(
+                paper_text=paper_text,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            )
+
+            if extraction_strategy == "keyword":
+                print("Strategy 'keyword': Searching for tokens...")
+                
+                # 1. Prepare data for your search function
+                # Extract just the text string from each tuple so find_anchor_chunks is happy
+                plain_text_chunks = [chunk[0] for chunk in all_chunks_with_indices]
+                
+                # 2. Get the indices of the "hits"
+                # This returns integers like [4, 5, 20, 21]
+                anchor_indices = self.find_anchor_chunks(
+                    chunks=plain_text_chunks, 
+                    dataset_name=dataset_name, 
+                    min_tokens_to_match=1
+                )
+                
+                # 3. Expand Context (Apply the Window)
+                # Grab neighbors around the anchors
+                indices_to_keep = set()
+                num_chunks = len(all_chunks_with_indices)
+                
+                for anchor_idx in anchor_indices:
+                    window_start = max(0, anchor_idx - context_window_size)
+                    window_end = min(num_chunks, anchor_idx + context_window_size + 1)
+                    indices_to_keep.update(range(window_start, window_end))
+
+                # 4. Map indices back to the full Tuple objects (Text, Start, End)
+                sorted_indices = sorted(list(indices_to_keep))
+                relevant_chunks_with_indices = [all_chunks_with_indices[i] for i in sorted_indices]
+            
+        # ... Then proceed to self.merge_chunks(relevant_chunks_with_indices)
+            elif extraction_strategy == "llm_context":
+                print("Scoring chunks...")
+                for chunk_tuple in all_chunks_with_indices:
+                    text_content = chunk_tuple[0] # Grab just the string for the LLM
+                    
+                    # Pass the string to your existing scorer
+                    if self.score_chunk_relevance(text_content, dataset_name):
+                        relevant_chunks_with_indices.append(chunk_tuple)
+
+            # Merge the relevant chunks before creating context
+            # This returns a list of clean strings (no overlaps, no extra separators for neighbors)
+            final_logical_blocks = self.merge_chunks(relevant_chunks_with_indices)
+
+            current_context_length = sum(len(block) for block in final_logical_blocks)
+
+            # If we found nothing, OR if what we found is suspiciously short (< 1000 chars), use full text
+            if not final_logical_blocks or current_context_length < 1000:
+                print(f"Warning: Context too short ({current_context_length} chars). Falling back to FULL TEXT.")
+                # We overwrite the blocks list with the single full text block
+                final_logical_blocks = [paper_text]
+            # 3. Extract Profile
+            profile = self._extract_profile_from_context(
+                context_blocks=final_logical_blocks, # Now sending clean merged text
+                dataset_name=dataset_name,
+                extraction_prompt=extraction_prompt
+            )
        
         profile["full_source_length"] = len(paper_text)
         profile["num_context_blocks"] = len(logical_context_blocks)
+        profile["extraction_strategy"] = extraction_strategy
        
         return profile
    

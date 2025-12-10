@@ -9,6 +9,7 @@ prompt-experiments/profile_cache/
 src/autoddg/related/data
 src/autoddg/related/papers
 examples/legacy
+prompt-experiments/legacy/data
 
 # Ignore macOS system files
 .DS_Store

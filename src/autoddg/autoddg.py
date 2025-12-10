@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Tuple, Optional
+from typing import Any, Tuple, Optional, Literal
 
 from beartype import beartype
 from pandas import DataFrame
@@ -240,6 +240,7 @@ class AutoDDG:
         dataset_name: str,
         extraction_prompt: Optional[str] = None,
         max_pages: Optional[int] = None,
+        extraction_strategy: Literal["full", "keyword", "llm_context"] = "keyword",
     ) -> dict:
         """
         Analyze a research paper PDF to extract related work context about the dataset.
@@ -281,7 +282,8 @@ class AutoDDG:
             pdf_path=pdf_path,
             dataset_name=dataset_name,
             extraction_prompt=extraction_prompt,
-            max_pages=max_pages
+            max_pages=max_pages,
+            extraction_strategy=extraction_strategy
         )
         
         return related_profile
