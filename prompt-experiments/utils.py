@@ -3,7 +3,7 @@ import pandas as pd
 import json
 import os
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Literal, Optional
 
 # NOTE: The constants DATASET_NAME and RESULTS_FILE will be passed 
 # or defined in the notebook, so they are not defined here.
@@ -28,8 +28,8 @@ def log_result(
     description_type: str, 
     description: str, 
     raw_scores: str, 
-    dataset_name: str,       # Pass as argument now
-    file_path: str,          # Pass as argument now
+    dataset_name: str,       
+    file_path: str,         
     related_profile: Optional[dict] = None
 ) -> None:
     """Logs the results of a single test run to a CSV file."""
@@ -44,6 +44,11 @@ def log_result(
     # Serialize the related profile dict to a JSON string if it exists
     related_profile_json = json.dumps(related_profile) if related_profile else ""
     
+    # EXTRACT STRATEGY: Get it from the profile, default to "N/A" if profile is None
+    extraction_strategy = "N/A"
+    if related_profile and "extraction_strategy" in related_profile:
+        extraction_strategy = related_profile["extraction_strategy"]
+
     # Storing the full evaluation dictionary for detail
     raw_scores_json = json.dumps(parsed_scores) 
     
@@ -53,6 +58,7 @@ def log_result(
         'Prompt_Type': prompt_name,
         'Description_Source': description_type,
         'Description_Text': description.replace('\n', ' '), 
+        'Extraction_Strategy': extraction_strategy, 
         'Related_Profile_JSON': related_profile_json,
         'Completeness_Score': completeness,
         'Conciseness_Score': conciseness,
@@ -83,8 +89,8 @@ def run_description_experiment(
     PROMPTS_TO_TEST: Dict[str, str], # Dictionary of prompts for augmented test
     load_profile_from_cache: Any, # Function to load profiles
     log_result: Any,            # Function to log results
-    generateOriginal: bool = False
-) -> None:
+    generateOriginal: bool = False,
+    extraction_strategy: Literal["full", "keyword", "llm_context"] = "keyword") -> None:
     """
     Runs baseline and augmented description generation and evaluation for a 
     single dataset, using profiles loaded from cache.
@@ -165,6 +171,7 @@ def run_description_experiment(
             pdf_path=PAPER_FILE,
             dataset_name=DATASET_NAME,
             extraction_prompt=extraction_prompt,
+            extraction_strategy=extraction_strategy
         )
         print(f"Related Work Summary: {related_profile['summary'][:150]}...")
 
