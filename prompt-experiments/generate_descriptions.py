@@ -25,22 +25,22 @@ from cache_utils import  load_profile_from_cache
 # ==========================================
 
 # Choose ONE strategy: "full", "keyword", or "llm_context"
-CHOSEN_STRATEGY = "llm_context" 
+CHOSEN_STRATEGY = "keyword" 
 
 # Define which prompts to test
 PROMPTS_TO_TEST = {
-    # "V0_Original": ALL_RELATED_WORK_PROMPTS["PROMPT_V0_ORIGINAL"],
-    # "V1_Revised": ALL_RELATED_WORK_PROMPTS["V1_Revised"],
-    # "V2_Hybrid": ALL_RELATED_WORK_PROMPTS["V2_Hybrid"],
-    # "Structured_v1": ALL_RELATED_WORK_PROMPTS["Structured_v1"],
-    # "Research_longv1": ALL_RELATED_WORK_PROMPTS["Research_longv1"],
+    "V0_Original": ALL_RELATED_WORK_PROMPTS["V0_Original"],
+    "V1_Revised": ALL_RELATED_WORK_PROMPTS["V1_Revised"],
+    "V2_Hybrid": ALL_RELATED_WORK_PROMPTS["V2_Hybrid"],
+    "Structured_v1": ALL_RELATED_WORK_PROMPTS["Structured_v1"],
+    "Research_longv1": ALL_RELATED_WORK_PROMPTS["Research_longv1"],
     "Research_longv2": ALL_RELATED_WORK_PROMPTS["Research_longv2"],
-    # "Research_shortv1": ALL_RELATED_WORK_PROMPTS["Research_shortv1"],
+    "Research_shortv1": ALL_RELATED_WORK_PROMPTS["Research_shortv1"],
 }
 
 # Resume capability: Set to a dataset ID string to skip everything before it. 
 # Set to None to run from the beginning.
-TARGET_START_ID = 11303604 
+TARGET_START_ID = 11071944 
 # Example: TARGET_START_ID = "12345"
 
 # ==========================================
@@ -54,7 +54,7 @@ MODEL_CONFIG = {
 }
 
 DATABASE_PATH_REL = '../src/autoddg/database.json'
-RESULTS_FILE_REL = 'results-updated-1.csv'
+RESULTS_FILE_REL = 'results-systematic.csv'
 PROFILE_CACHE_DIR = '/profile_cache'
 
 # Path setup
